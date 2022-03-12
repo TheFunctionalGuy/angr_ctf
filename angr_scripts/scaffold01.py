@@ -1,7 +1,7 @@
 import angr
 import sys
 
-def main(argv):
+def main():
 	path_to_binary = '../challenge_binaries/01_angr_avoid'
 	project = angr.Project(path_to_binary)
 	initial_state = project.factory.entry_state(
@@ -13,9 +13,9 @@ def main(argv):
 	simulation = project.factory.simgr(initial_state)
 
 	# Explore the binary, but this time, instead of only looking for a state that
-	# reaches the print_good_address, also find a state that does not reach 
+	# reaches the print_good_address, also find a state that does not reach
 	# will_not_succeed_address. The binary is pretty large, to save you some time,
-	# everything you will need to look at is near the beginning of the address 
+	# everything you will need to look at is near the beginning of the address
 	# space.
 	# (!)
 	print_good_address = 0x080492fb
@@ -29,4 +29,4 @@ def main(argv):
 		raise Exception('Could not find the solution')
 
 if __name__ == '__main__':
-	main(sys.argv)
+	main()

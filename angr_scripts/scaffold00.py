@@ -34,7 +34,7 @@ def main(argv):
 	# (!)
 	path_to_binary = '../challenge_binaries/00_angr_find'  # :string
 	project = angr.Project(path_to_binary)
-	
+
 
 	# Tell Angr where to start executing (should it start from the main()
 	# function or somewhere else?) For now, use the entry_state function
@@ -51,8 +51,8 @@ def main(argv):
 	simulation = project.factory.simgr(initial_state)
 
 	# Explore the binary to attempt to find the address that prints "Good Job."
-	# You will have to find the address you want to find and insert it here. 
-	# This function will keep executing until it either finds a solution or it 
+	# You will have to find the address you want to find and insert it here.
+	# This function will keep executing until it either finds a solution or it
 	# has explored every possible path through the executable.
 	# (!)
 	print_good_address = 0x80492f0  # :integer (probably in hexadecimal)
@@ -67,7 +67,7 @@ def main(argv):
 		# target address.
 		solution_state = simulation.found[0]
 
-		# Print the string that Angr wrote to stdin to follow solution_state. This 
+		# Print the string that Angr wrote to stdin to follow solution_state. This
 		# is our solution.
 		print(f'Password: {solution_state.posix.dumps(sys.stdin.fileno()).decode()}')
 	else:
