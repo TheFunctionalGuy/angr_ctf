@@ -6,3 +6,6 @@ env
 obj
 users
 env
+
+# Custom challenge binary folder
+challenge_binaries/
