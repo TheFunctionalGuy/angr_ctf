@@ -16,7 +16,7 @@
 # }
 #
 # ...
-# 
+#
 # char* input = user_input();
 # char* encrypted_input = complex_function(input);
 # if (check_equals_AABBCCDDEEFFGGHH(encrypted_input, 16)) {
@@ -27,9 +27,9 @@
 #
 # The function checks if *to_check == "AABBCCDDEEFFGGHH". Verify this yourself.
 # While you, as a human, can easily determine that this function is equivalent
-# to simply comparing the strings, the computer cannot. Instead the computer 
-# would need to branch every time the if statement in the loop was called (16 
-# times), resulting in 2^16 = 65,536 branches, which will take too long of a 
+# to simply comparing the strings, the computer cannot. Instead the computer
+# would need to branch every time the if statement in the loop was called (16
+# times), resulting in 2^16 = 65,536 branches, which will take too long of a
 # time to evaluate for our needs.
 #
 # We do not know how the complex_function works, but we want to find an input
@@ -48,60 +48,65 @@ import claripy
 import sys
 
 def main(argv):
-  path_to_binary = argv[1]
-  project = angr.Project(path_to_binary)
+	path_to_binary = argv[1]
+	project = angr.Project(path_to_binary)
 
-  start_address = ???
-  initial_state = project.factory.blank_state(
-    addr=start_address,
-    add_options = { angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-                    angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS}
-  )
+	# First instruction after clean-up after of scanf()
+	start_address = 0x08049360
+	initial_state = project.factory.blank_state(
+		addr=start_address,
+		add_options = {
+			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+		}
+	)
 
-  password = claripy.BVS('password', ???)
+	password = claripy.BVS('password', 16 * 8)
 
-  password_address = ???
-  initial_state.memory.store(password_address, password)
+	password_address = 0x804c040
+	initial_state.memory.store(password_address, password)
 
-  simulation = project.factory.simgr(initial_state)
+	simulation = project.factory.simgr(initial_state)
 
-  # Angr will not be able to reach the point at which the binary prints out
-  # 'Good Job.'. We cannot use that as the target anymore.
-  # (!)
-  address_to_check_constraint = ???
-  simulation.explore(find=address_to_check_constraint)
+	# Angr will not be able to reach the point at which the binary prints out
+	# 'Good Job.'. We cannot use that as the target anymore.
+	# (!)
+	#* This is the instruction of check_equals() call. If we found a way here
+	#* we can use symbolic execution to solve the password.
+	address_to_check_constraint = 0x080493ae
+	simulation.explore(find=address_to_check_constraint)
 
-  if simulation.found:
-    solution_state = simulation.found[0]
+	if simulation.found:
+		solution_state = simulation.found[0]
 
-    # Recall that we need to constrain the to_check parameter (see top) of the 
-    # check_equals_ function. Determine the address that is being passed as the
-    # parameter and load it into a bitvector so that we can constrain it.
-    # (!)
-    constrained_parameter_address = ???
-    constrained_parameter_size_bytes = ???
-    constrained_parameter_bitvector = solution_state.memory.load(
-      constrained_parameter_address,
-      constrained_parameter_size_bytes
-    )
-    # We want to constrain the system to find an input that will make
-    # constrained_parameter_bitvector equal the desired value.
-    # (!)
-    constrained_parameter_desired_value = ??? # :string (encoded)
+		# Recall that we need to constrain the to_check parameter (see top) of the
+		# check_equals_ function. Determine the address that is being passed as the
+		# parameter and load it into a bitvector so that we can constrain it.
+		# (!)
+		constrained_parameter_address = 0x804c040
+		constrained_parameter_size_bytes = 16
+		constrained_parameter_bitvector = solution_state.memory.load(
+			constrained_parameter_address,
+			constrained_parameter_size_bytes
+		)
+		# We want to constrain the system to find an input that will make
+		# constrained_parameter_bitvector equal the desired value.
+		# (!)
+		constrained_parameter_desired_value = 'UTSLAQIEKEDVCFDS'.encode() # :string (encoded)
 
-    # Specify a claripy expression (using Pythonic syntax) that tests whether
-    # constrained_parameter_bitvector == constrained_parameter_desired_value.
-    # Add the constraint to the state to let z3 attempt to find an input that
-    # will make this expression true.
-    solution_state.add_constraints(constrained_parameter_bitvector == constrained_parameter_desired_value)
+		# Specify a claripy expression (using Pythonic syntax) that tests whether
+		# constrained_parameter_bitvector == constrained_parameter_desired_value.
+		# Add the constraint to the state to let z3 attempt to find an input that
+		# will make this expression true.
+		solution_state.add_constraints(constrained_parameter_bitvector == constrained_parameter_desired_value)
 
-    # Solve for the constrained_parameter_bitvector.
-    # (!)
-    solution = ???
+		# Solve for the constrained_parameter_bitvector.
+		# (!)
+		solution = solution_state.solver.eval(password, cast_to=bytes).decode()
 
-    print(solution)
-  else:
-    raise Exception('Could not find the solution')
+		print(solution)
+	else:
+		raise Exception('Could not find the solution')
 
 if __name__ == '__main__':
-  main(sys.argv)
+	main(sys.argv)
