@@ -6,6 +6,7 @@ import angr
 import claripy
 import sys
 
+
 def main(argv):
 	path_to_binary = argv[1]
 	project = angr.Project(path_to_binary)
@@ -16,12 +17,11 @@ def main(argv):
 	# (!)
 	start_address = 0x08049678  # :integer (probably hexadecimal)
 	initial_state = project.factory.blank_state(
-		addr=start_address,
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    addr=start_address,
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
 	# Create a symbolic bitvector (the datatype Angr uses to inject symbolic
 	# values into the binary.) The first parameter is just a name Angr uses
@@ -85,6 +85,7 @@ def main(argv):
 		print(solution)
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main(sys.argv)

@@ -25,7 +25,8 @@
 import angr
 import sys
 
-def main(argv):
+
+def main():
 	# Create an Angr project.
 	# If you want to be able to point to the binary from the command line, you can
 	# use argv[1] as the parameter. Then, you can run the script from the command
@@ -35,16 +36,14 @@ def main(argv):
 	path_to_binary = '../challenge_binaries/00_angr_find'  # :string
 	project = angr.Project(path_to_binary)
 
-
 	# Tell Angr where to start executing (should it start from the main()
 	# function or somewhere else?) For now, use the entry_state function
 	# to instruct Angr to start from the main() function.
 	initial_state = project.factory.entry_state(
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
 	# Create a simulation manager initialized with the starting state. It provides
 	# a number of useful tools to search and execute the binary.
@@ -69,11 +68,14 @@ def main(argv):
 
 		# Print the string that Angr wrote to stdin to follow solution_state. This
 		# is our solution.
-		print(f'Password: {solution_state.posix.dumps(sys.stdin.fileno()).decode()}')
+		print(
+		    f'Password: {solution_state.posix.dumps(sys.stdin.fileno()).decode()}'
+		)
 	else:
 		# If Angr could not find a path that reaches print_good_address, throw an
 		# error. Perhaps you mistyped the print_good_address?
 		raise Exception('Could not find the solution')
 
+
 if __name__ == '__main__':
-	main(sys.argv)
+	main()

@@ -13,15 +13,15 @@
 import angr
 import sys
 
+
 def main(argv):
 	path_to_binary = argv[1]
 	project = angr.Project(path_to_binary)
 	initial_state = project.factory.entry_state(
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 	simulation = project.factory.simgr(initial_state)
 
 	# Define a function that checks if you have found the state you are looking
@@ -32,7 +32,7 @@ def main(argv):
 
 		# Return whether 'Good Job.' has been printed yet.
 		# (!)
-		return 'Good Job.'.encode('utf-8') in stdout_output # :boolean
+		return 'Good Job.'.encode('utf-8') in stdout_output  # :boolean
 
 	# Same as above, but this time check if the state should abort. If you return
 	# False, Angr will continue to step the state. In this specific challenge, the
@@ -51,6 +51,7 @@ def main(argv):
 		print(solution_state.posix.dumps(sys.stdin.fileno()).decode())
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main(sys.argv)

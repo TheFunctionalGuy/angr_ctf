@@ -1,15 +1,15 @@
 import angr
 import sys
 
+
 def main():
 	path_to_binary = '../challenge_binaries/01_angr_avoid'
 	project = angr.Project(path_to_binary)
 	initial_state = project.factory.entry_state(
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 	simulation = project.factory.simgr(initial_state)
 
 	# Explore the binary, but this time, instead of only looking for a state that
@@ -27,6 +27,7 @@ def main():
 		print(solution_state.posix.dumps(sys.stdin.fileno()).decode())
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main()

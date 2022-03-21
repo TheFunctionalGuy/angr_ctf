@@ -11,6 +11,7 @@ import angr
 import claripy
 import sys
 
+
 def main(argv):
 	path_to_binary = argv[1]
 	project = angr.Project(path_to_binary)
@@ -40,12 +41,11 @@ def main(argv):
 	# (!)
 	start_address = 0x080493f2
 	initial_state = project.factory.blank_state(
-		addr=start_address,
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    addr=start_address,
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
 	# We are jumping into the middle of a function! Therefore, we need to account
 	# for how the function constructs the stack. The second instruction of the
@@ -135,8 +135,10 @@ def main(argv):
 	# This will push the bitvector on the stack, and increment esp the correct
 	# amount. You will need to push multiple bitvectors on the stack.
 	# (!)
-	initial_state.stack_push(password0)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
-	initial_state.stack_push(password1)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
+	initial_state.stack_push(
+	    password0)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
+	initial_state.stack_push(
+	    password1)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
 
 	simulation = project.factory.simgr(initial_state)
 
@@ -160,6 +162,7 @@ def main(argv):
 		print(solution)
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main(sys.argv)

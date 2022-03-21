@@ -14,6 +14,7 @@ import angr
 import claripy
 import sys
 
+
 def main(argv):
 	path_to_binary = argv[1]
 	project = angr.Project(path_to_binary)
@@ -21,11 +22,10 @@ def main(argv):
 	# Since Angr can handle the initial call to scanf, we can start from the
 	# beginning.
 	initial_state = project.factory.entry_state(
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
 	# Hook the address of where check_equals_ is called.
 	# (!)
@@ -38,27 +38,27 @@ def main(argv):
 	# bytes are used to represent them in memory. This will be the skip length.
 	# (!)
 	instruction_to_skip_length = 5
-	@project.hook(check_equals_called_address, length=instruction_to_skip_length)
+
+	@project.hook(check_equals_called_address,
+	              length=instruction_to_skip_length)
 	def skip_check_equals_(state):
 		# Determine the address where user input is stored. It is passed as a
 		# parameter ot the check_equals_ function. Then, load the string. Reminder:
 		# int check_equals_(char* to_check, int length) { ...
-		user_input_buffer_address = 0x804c044 # :integer, probably hexadecimal
+		user_input_buffer_address = 0x804c044  # :integer, probably hexadecimal
 		user_input_buffer_length = 0x10
 
 		# Reminder: state.memory.load will read the stored value at the address
 		# user_input_buffer_address of byte length user_input_buffer_length.
 		# It will return a bitvector holding the value. This value can either be
 		# symbolic or concrete, depending on what was stored there in the program.
-		user_input_string = state.memory.load(
-			user_input_buffer_address,
-			user_input_buffer_length
-		)
+		user_input_string = state.memory.load(user_input_buffer_address,
+		                                      user_input_buffer_length)
 
 		# Determine the string this function is checking the user input against.
 		# It's encoded in the name of this function; decompile the program to find
 		# it.
-		check_against_string = 'UUZDWMLQKENZSTZW'.encode() # :string
+		check_against_string = 'UUZDWMLQKENZSTZW'.encode()  # :string
 
 		# gcc uses eax to store the return value, if it is an integer. We need to
 		# set eax to 1 if check_against_string == user_input_string and 0 otherwise.
@@ -69,11 +69,8 @@ def main(argv):
 		# expression that evaluates to ret_if_true if expression is true and
 		# ret_if_false otherwise.
 		# Think of it like the Python "value0 if expression else value1".
-		state.regs.eax = claripy.If(
-			user_input_string == check_against_string,
-			claripy.BVV(1, 32),
-			claripy.BVV(0, 32)
-		)
+		state.regs.eax = claripy.If(user_input_string == check_against_string,
+		                            claripy.BVV(1, 32), claripy.BVV(0, 32))
 
 	simulation = project.factory.simgr(initial_state)
 
@@ -96,6 +93,7 @@ def main(argv):
 		print(solution)
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main(sys.argv)

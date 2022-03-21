@@ -2,24 +2,24 @@ import angr
 import claripy
 import sys
 
+
 def main(argv):
 	path_to_binary = argv[1]
 	project = angr.Project(path_to_binary)
 
 	start_address = 0x0804938f
 	initial_state = project.factory.blank_state(
-		addr=start_address,
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    addr=start_address,
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
 	# The binary is calling scanf("%8s %8s").
 	# (!)
 	password_parts = [
-		claripy.BVS('password0', 8*8),
-		claripy.BVS('password1', 8*8),
+	    claripy.BVS('password0', 8 * 8),
+	    claripy.BVS('password1', 8 * 8),
 	]
 
 	# Instead of telling the binary to write to the address of the memory
@@ -34,12 +34,15 @@ def main(argv):
 	# (!)
 	#* These addresses have to be just in an unmapped memory region
 	addresses = [
-		(0xb34f878, 0x7000000),
-		(0xb34f880, 0x7000010),
+	    (0xb34f878, 0x7000000),
+	    (0xb34f880, 0x7000010),
 	]
 
 	for pointer_to_malloc_memory_address, fake_heap_address in addresses:
-		initial_state.memory.store(pointer_to_malloc_memory_address, fake_heap_address, endness=project.arch.memory_endness, size=4)
+		initial_state.memory.store(pointer_to_malloc_memory_address,
+		                           fake_heap_address,
+		                           endness=project.arch.memory_endness,
+		                           size=4)
 
 	# Store our symbolic values at our fake_heap_address. Look at the binary to
 	# determine the offsets from the fake_heap_address where scanf writes.
@@ -62,11 +65,15 @@ def main(argv):
 	if simulation.found:
 		solution_state = simulation.found[0]
 
-		solution = ' '.join([solution_state.solver.eval(password_part, cast_to=bytes).decode() for password_part in password_parts])
+		solution = ' '.join([
+		    solution_state.solver.eval(password_part, cast_to=bytes).decode()
+		    for password_part in password_parts
+		])
 
 		print(solution)
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main(sys.argv)

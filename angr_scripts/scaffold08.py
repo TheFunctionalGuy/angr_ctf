@@ -47,6 +47,7 @@ import angr
 import claripy
 import sys
 
+
 def main(argv):
 	path_to_binary = argv[1]
 	project = angr.Project(path_to_binary)
@@ -54,12 +55,11 @@ def main(argv):
 	# First instruction after clean-up after of scanf()
 	start_address = 0x08049360
 	initial_state = project.factory.blank_state(
-		addr=start_address,
-		add_options = {
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-			angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
-		}
-	)
+	    addr=start_address,
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
 	password = claripy.BVS('password', 16 * 8)
 
@@ -86,19 +86,18 @@ def main(argv):
 		constrained_parameter_address = 0x804c040
 		constrained_parameter_size_bytes = 16
 		constrained_parameter_bitvector = solution_state.memory.load(
-			constrained_parameter_address,
-			constrained_parameter_size_bytes
-		)
+		    constrained_parameter_address, constrained_parameter_size_bytes)
 		# We want to constrain the system to find an input that will make
 		# constrained_parameter_bitvector equal the desired value.
 		# (!)
-		constrained_parameter_desired_value = 'UTSLAQIEKEDVCFDS'.encode() # :string (encoded)
+		constrained_parameter_desired_value = 'UTSLAQIEKEDVCFDS'.encode()
 
 		# Specify a claripy expression (using Pythonic syntax) that tests whether
 		# constrained_parameter_bitvector == constrained_parameter_desired_value.
 		# Add the constraint to the state to let z3 attempt to find an input that
 		# will make this expression true.
-		solution_state.add_constraints(constrained_parameter_bitvector == constrained_parameter_desired_value)
+		solution_state.add_constraints(constrained_parameter_bitvector ==
+		                               constrained_parameter_desired_value)
 
 		# Solve for the constrained_parameter_bitvector.
 		# (!)
@@ -107,6 +106,7 @@ def main(argv):
 		print(solution)
 	else:
 		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
 	main(sys.argv)
