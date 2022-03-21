@@ -10,69 +10,73 @@ import angr
 import claripy
 import sys
 
+
 def main(argv):
-  path_to_binary = ???
+	path_to_binary = argv[1]
 
-  # The shared library is compiled with position-independent code. You will need
-  # to specify the base address. All addresses in the shared library will be
-  # base + offset, where offset is their address in the file.
-  # (!)
-  base = ???
-  project = angr.Project(path_to_binary, load_options={
-    'main_opts' : {
-      'base_addr' : base
-    }
-  })
+	# The shared library is compiled with position-independent code. You will need
+	# to specify the base address. All addresses in the shared library will be
+	# base + offset, where offset is their address in the file.
+	# (!)
+	base = 0x7000000
+	project = angr.Project(path_to_binary,
+	                       load_options={'main_opts': {
+	                           'base_addr': base
+	                       }})
 
-  # Initialize any symbolic values here; you will need at least one to pass to
-  # the validate function.
-  # (!)
-  buffer_pointer = claripy.BVV(???, ???)
+	# Initialize any symbolic values here; you will need at least one to pass to
+	# the validate function.
+	# (!)
+	buffer_pointer = claripy.BVV(0x6000000, 32)
 
-  # Begin the state at the beginning of the validate function, as if it was
-  # called by the program. Determine the parameters needed to call validate and
-  # replace 'parameters...' with bitvectors holding the values you wish to pass.
-  # Recall that 'claripy.BVV(value, size_in_bits)' constructs a bitvector
-  # initialized to a single value.
-  # Remember to add the base value you specified at the beginning to the
-  # function address!
-  # Hint: int validate(char* buffer, int length) { ...
-  # (!)
-  validate_function_address = base + ???
-  initial_state = project.factory.call_state(
-                    validate_function_address,
-                    buffer_pointer,
-                    ???
-                  )
+	# Begin the state at the beginning of the validate function, as if it was
+	# called by the program. Determine the parameters needed to call validate and
+	# replace 'parameters...' with bitvectors holding the values you wish to pass.
+	# Recall that 'claripy.BVV(value, size_in_bits)' constructs a bitvector
+	# initialized to a single value.
+	# Remember to add the base value you specified at the beginning to the
+	# function address!
+	# Hint: int validate(char* buffer, int length) { ...
+	# (!)
+	validate_function_address = base + 0x0000129c
+	initial_state = project.factory.call_state(
+	    validate_function_address,
+	    buffer_pointer,
+	    claripy.BVV(8, 32),
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS
+	    })
 
-  # Inject a symbolic value for the password buffer into the program and
-  # instantiate the simulation. Another hint: the password is 8 bytes long.
-  # (!)
-  password = claripy.BVS( ???, ??? )
-  initial_state.memory.store( ??? , ???)
-  
-  simulation = project.factory.simgr(initial_state)
+	# Inject a symbolic value for the password buffer into the program and
+	# instantiate the simulation. Another hint: the password is 8 bytes long.
+	# (!)
+	password = claripy.BVS('password', 8 * 8)
+	initial_state.memory.store(buffer_pointer, password)
 
-  # We wish to reach the end of the validate function and constrain the
-  # return value of the function (stored in eax) to equal true (value of 1)
-  # just before the function returns. We could use a hook, but instead we
-  # can search for the address just before the function returns and then
-  # constrain eax
-  # (!)
-  check_constraint_address = base + ???
-  simulation.explore(find=check_constraint_address)
+	simulation = project.factory.simgr(initial_state)
 
-  if simulation.found:
-    solution_state = simulation.found[0]
+	# We wish to reach the end of the validate function and constrain the
+	# return value of the function (stored in eax) to equal true (value of 1)
+	# just before the function returns. We could use a hook, but instead we
+	# can search for the address just before the function returns and then
+	# constrain eax
+	# (!)
+	check_constraint_address = base + 0x0000134c
+	simulation.explore(find=check_constraint_address)
 
-    # Determine where the program places the return value, and constrain it so
-    # that it is true. Then, solve for the solution and print it.
-    # (!)
-    solution_state.add_constraints( ??? )
-    solution = ???
-    print(solution)
-  else:
-    raise Exception('Could not find the solution')
+	if simulation.found:
+		solution_state = simulation.found[0]
+
+		# Determine where the program places the return value, and constrain it so
+		# that it is true. Then, solve for the solution and print it.
+		# (!)
+		solution_state.add_constraints(solution_state.regs.eax != 0)
+		solution = solution_state.solver.eval(password, cast_to=bytes).decode()
+		print(solution)
+	else:
+		raise Exception('Could not find the solution')
+
 
 if __name__ == '__main__':
-  main(sys.argv)
+	main(sys.argv)
