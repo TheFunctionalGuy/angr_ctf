@@ -32,3 +32,57 @@
 # can take a long time with Angr, so you should replace it with a SimProcedure.
 # angr.SIM_PROCEDURES['glibc']['__libc_start_main']
 # Note 'glibc' instead of 'libc'.
+
+import angr
+import sys
+
+
+def main(argv):
+	project = angr.Project(argv[1])
+
+	# Replace libc and glibc functions
+	libc_functions = [
+	    ('puts', 0x805ec90),
+	    ('printf', 0x80512f0),
+	    ('scanf', 0x8051340),
+	]
+
+	glibc_functions = [('__libc_start_main', 0x0804a250)]
+
+	for func_name, address in libc_functions:
+		project.hook(address, angr.SIM_PROCEDURES['libc'][func_name]())
+
+	for func_name, address in glibc_functions:
+		project.hook(0x0804a250, angr.SIM_PROCEDURES['glibc'][func_name]())
+
+	start_address = 0x08049e1f
+	initial_state = project.factory.blank_state(
+	    addr=start_address,
+	    add_options={
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
+	    })
+
+	simulation = project.factory.simulation_manager(initial_state,
+	                                                veritesting=True)
+
+	def is_successful(state):
+		stdout_output = state.posix.dumps(sys.stdout.fileno())
+		return 'Good Job.'.encode() in stdout_output
+
+	def should_abort(state):
+		stdout_output = state.posix.dumps(sys.stdout.fileno())
+		return 'Try again.'.encode() in stdout_output
+
+	simulation.explore(find=is_successful, avoid=should_abort)
+
+	if simulation.found:
+		solution_state = simulation.found[0]
+
+		print(solution_state.posix.dumps(sys.stdin.fileno()).decode())
+	else:
+		raise Exception('Could not find the solution')
+
+
+if __name__ == '__main__':
+	main(sys.argv)
