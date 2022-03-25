@@ -45,7 +45,7 @@ def main(argv):
 	    claripy.BVV(8, 32),
 	    add_options={
 	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-	        angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS
 	    })
 
 	# Inject a symbolic value for the password buffer into the program and

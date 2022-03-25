@@ -93,7 +93,7 @@ def main(argv):
 	initial_state = project.factory.entry_state(
 	    add_options={
 	        angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-	        angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
+	        angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS,
 	    })
 
 	# Again, scanf needs to be replaced.
